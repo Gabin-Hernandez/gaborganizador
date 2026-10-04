@@ -1,0 +1,22 @@
+{
+  "name": "Finanzas Personales",
+  "short_name": "Finanzas",
+  "description": "Control de gastos, salario, ingresos extra e inversiones con arquitectura limpia.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/monoicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/logomono.png",
+      "sizes": "800x1000",
+      "type": "image/png"
+    }
+  ]
+}

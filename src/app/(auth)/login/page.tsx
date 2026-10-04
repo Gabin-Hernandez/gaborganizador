@@ -3,17 +3,16 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/application/context/AuthContext';
+import { LoginForm } from '@/components/auth/LoginForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function HomePage() {
-  const router = useRouter();
+export default function LoginPage() {
   const { user, profile, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/login');
-      } else if (profile && !profile.onboarded) {
+    if (!loading && user) {
+      if (profile && !profile.onboarded) {
         router.replace('/onboarding');
       } else {
         router.replace('/dashboard');
@@ -21,9 +20,17 @@ export default function HomePage() {
     }
   }, [user, profile, loading, router]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <LoadingSpinner label="Iniciando Finanzas Personales..." />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+      <LoginForm />
     </div>
   );
 }
