@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
+  Receipt,
   Tags,
   TrendingUp,
   DollarSign,
@@ -32,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen: propMobileOpen, on
 
   const menuItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, image: '/dashboard.png' },
+    { label: 'Registro de gastos', href: '/gastos', icon: Receipt, image: '/salario.png' },
     { label: 'Categorías de gastos', href: '/categorias', icon: Tags, image: '/categorias.png' },
     { label: 'Ingresos extra', href: '/ingresos', icon: TrendingUp, image: '/ingresoextra.png' },
     { label: 'Salario', href: '/salario', icon: DollarSign, image: '/salario.png' },

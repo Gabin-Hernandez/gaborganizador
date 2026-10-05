@@ -18,6 +18,7 @@ export const MobileMoreMenu: React.FC<MobileMoreMenuProps> = ({ isOpen, onClose 
   const { logout, user } = useAuth();
 
   const moreItems = [
+    { label: 'Registro de gastos', subtitle: 'Administrar historial de gastos', href: '/gastos', icon: DollarSign, image: '/salario.png' },
     { label: 'Salario', subtitle: 'Configurar salario base', href: '/salario', icon: DollarSign, image: '/salario.png' },
     { label: 'Inversión', subtitle: 'Patrimonio y aportaciones', href: '/inversion', icon: PieChart, image: '/inversion.png' },
     { label: 'Ingresos extra', subtitle: 'Freelance, ventas y extras', href: '/ingresos', icon: TrendingUp, image: '/ingresoextra.png' }
