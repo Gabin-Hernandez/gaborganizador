@@ -1,4 +1,4 @@
-import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from './firebaseClient';
 import { Expense } from '@/domain/entities/Expense';
 import { IExpenseRepository } from '@/domain/repositories/IExpenseRepository';
@@ -28,6 +28,18 @@ export class ExpenseRepositoryFirebase implements IExpenseRepository {
       ...expense,
       createdAt: now
     };
+
+    // If occurrence has a deterministic recurring ID and date, enforce Firestore document ID determinism
+    if (expense.recurringExpenseId && expense.occurrenceDate) {
+      const deterministicId = `${expense.recurringExpenseId}_${expense.occurrenceDate}`;
+      const docRef = doc(db, 'users', uid, 'expenses', deterministicId);
+      await setDoc(docRef, payload, { merge: true });
+      return {
+        id: deterministicId,
+        ...payload
+      };
+    }
+
     const docRef = await addDoc(expensesRef, payload);
     return {
       id: docRef.id,

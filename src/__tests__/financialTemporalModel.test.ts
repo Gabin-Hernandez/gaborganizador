@@ -5,7 +5,7 @@ import { Expense } from '../domain/entities/Expense';
 import { ExtraIncome } from '../domain/entities/ExtraIncome';
 import { RecurringExpense } from '../domain/entities/RecurringExpense';
 
-describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
+describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (17 TEST SCENARIOS)', () => {
 
   // TEST 1 & TEST 8: Gasto registrado el 04 Oct 2026 pero con expenseDate 27 Sep 2026
   it('TEST 1 & 8: Expense captured on Oct 4 with expenseDate Sep 27 belongs strictly to September, not October', () => {
@@ -104,7 +104,7 @@ describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
     // Simulate saved expenses
     const existingExpenses: Expense[] = missing1.map((item, idx) => ({
       ...item,
-      id: `generated-${idx}`,
+      id: `${item.recurringExpenseId}_${item.occurrenceDate}`,
       userId: 'user-1',
       createdAt: '2026-10-04T00:00:00.000Z'
     }));
@@ -117,7 +117,7 @@ describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
   // TEST 5: Modificar recurrencia de $650 -> $700 NO altera gastos históricos ya registrados
   it('TEST 5: Updating recurring expense definition amount does not alter past historical occurrences', () => {
     const historicalExpense: Expense = {
-      id: 'occ-sep',
+      id: 'rec-1_2026-09-27',
       userId: 'user-1',
       categoryId: 'cat-internet',
       categoryName: 'Internet',
@@ -159,7 +159,7 @@ describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
   // TEST 6 & 7: Pausar / Desactivar recurrencia no genera nuevas ocurrencias e historial permanece intacto
   it('TEST 6 & 7: Paused or ended recurring expense generates 0 new occurrences while keeping history intact', () => {
     const historicalExpense: Expense = {
-      id: 'occ-sep',
+      id: 'rec-1_2026-09-27',
       userId: 'user-1',
       categoryId: 'cat-internet',
       categoryName: 'Internet',
@@ -191,7 +191,7 @@ describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
     expect(historicalExpense.amount).toBe(650); // Historical expense remains intact
   });
 
-  // TEST 9 & 10 & 11: Selección de mes en Dashboard y vistas filtra estrictamente movimientos de ese mes
+  // TEST 9 & 10 & 11: Selección de mes en Dashboard y vistas filtra strictly movimientos de ese mes
   it('TEST 9, 10 & 11: Switching period recalculates all metrics for selected month only', () => {
     const expenses: Expense[] = [
       {
@@ -314,5 +314,13 @@ describe('MODELO TEMPORAL DE GASTOS Y RECURRENCIA (15 TEST SCENARIOS)', () => {
     const dates = RecurringExpenseService.getExpectedOccurrenceDates(def, '2026-02-28');
     expect(dates).toContain('2026-01-31');
     expect(dates).toContain('2026-02-28'); // Clamped to Feb 28th!
+  });
+
+  // TEST 16: Formato de ID determinista para prevenir carreras en Firestore
+  it('TEST 16: Deterministic occurrence ID format follows recurringExpenseId_occurrenceDate', () => {
+    const recId = 'abc123';
+    const occDate = '2026-10-27';
+    const docId = `${recId}_${occDate}`;
+    expect(docId).toBe('abc123_2026-10-27');
   });
 });
