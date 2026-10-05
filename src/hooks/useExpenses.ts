@@ -19,11 +19,36 @@ export function useExpenses() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     setError(null);
+
+    // Fast initial hydration from cache
+    let hasCache = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem(`finanzas_expenses_${user.uid}`);
+        if (cached) {
+          setExpenses(JSON.parse(cached));
+          setLoading(false);
+          hasCache = true;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!hasCache) {
+      setLoading(true);
+    }
+
     try {
       const data = await repo.getExpenses(user.uid);
       setExpenses(data);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(`finanzas_expenses_${user.uid}`, JSON.stringify(data));
+        } catch {
+          // ignore
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Error al cargar gastos');
     } finally {

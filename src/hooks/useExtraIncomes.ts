@@ -19,11 +19,35 @@ export function useExtraIncomes() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     setError(null);
+
+    let hasCache = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem(`finanzas_incomes_${user.uid}`);
+        if (cached) {
+          setExtraIncomes(JSON.parse(cached));
+          setLoading(false);
+          hasCache = true;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!hasCache) {
+      setLoading(true);
+    }
+
     try {
       const data = await repo.getExtraIncomes(user.uid);
       setExtraIncomes(data);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(`finanzas_incomes_${user.uid}`, JSON.stringify(data));
+        } catch {
+          // ignore
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Error al cargar ingresos extra');
     } finally {

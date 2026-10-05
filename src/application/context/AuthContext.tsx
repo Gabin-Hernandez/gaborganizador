@@ -47,6 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await profileRepo.saveProfile(newProfile);
         p = await profileRepo.getProfile(uid);
       }
+      if (p && typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(`finanzas_profile_${uid}`, JSON.stringify(p));
+        } catch {
+          // ignore quota issues
+        }
+      }
       setProfile(p);
       return p;
     } catch (err) {
@@ -58,14 +65,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await fetchProfile(currentUser.uid);
+        // Instant hydration from cache if available
+        if (typeof window !== 'undefined') {
+          try {
+            const cached = sessionStorage.getItem(`finanzas_profile_${currentUser.uid}`);
+            if (cached) {
+              setProfile(JSON.parse(cached));
+            }
+          } catch {
+            // ignore JSON errors
+          }
+        }
+        // Immediately unblock auth loading and sync profile in background
+        setLoading(false);
+        fetchProfile(currentUser.uid);
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -82,6 +102,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (user && typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem(`finanzas_profile_${user.uid}`);
+      } catch {
+        // ignore
+      }
+    }
     await firebaseSignOut(auth);
     setUser(null);
     setProfile(null);

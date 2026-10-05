@@ -21,8 +21,27 @@ export function useInvestment() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     setError(null);
+
+    let hasCache = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedCfg = sessionStorage.getItem(`finanzas_invest_cfg_${user.uid}`);
+        const cachedContribs = sessionStorage.getItem(`finanzas_invest_contribs_${user.uid}`);
+        if (cachedCfg && cachedContribs) {
+          setConfig(JSON.parse(cachedCfg));
+          setContributions(JSON.parse(cachedContribs));
+          setLoading(false);
+          hasCache = true;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!hasCache) {
+      setLoading(true);
+    }
+
     try {
       const [cfg, contribs] = await Promise.all([
         repo.getInvestmentConfig(user.uid),
@@ -30,6 +49,14 @@ export function useInvestment() {
       ]);
       setConfig(cfg);
       setContributions(contribs);
+      if (typeof window !== 'undefined') {
+        try {
+          if (cfg) sessionStorage.setItem(`finanzas_invest_cfg_${user.uid}`, JSON.stringify(cfg));
+          sessionStorage.setItem(`finanzas_invest_contribs_${user.uid}`, JSON.stringify(contribs));
+        } catch {
+          // ignore
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Error al cargar información de inversión');
     } finally {
