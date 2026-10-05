@@ -8,6 +8,7 @@ import { GastosOverviewCards } from '@/components/gastos/GastosOverviewCards';
 import { GastosFilterBar, GastosFilterState } from '@/components/gastos/GastosFilterBar';
 import { GastosCardList } from '@/components/gastos/GastosCardList';
 import { ExpenseModal } from '@/components/expenses/ExpenseModal';
+import { MonthSelector, formatPeriodLabel } from '@/components/ui/MonthSelector';
 import { Expense } from '@/domain/entities/Expense';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -16,8 +17,12 @@ interface PageProps {
 }
 
 export default function GastosPage({ onOpenMobileSidebar }: PageProps) {
-  const { expenses, loading, addExpense, updateExpense, deleteExpense, refresh } = useExpenses();
-  const { refreshAll } = useFinancialSummary();
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(() =>
+    new Date().toISOString().slice(0, 7)
+  );
+
+  const { expenses: allExpenses, loading, addExpense, updateExpense, deleteExpense, refresh } = useExpenses();
+  const { refreshAll } = useFinancialSummary(selectedPeriod);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -30,9 +35,14 @@ export default function GastosPage({ onOpenMobileSidebar }: PageProps) {
     sort: 'RECENT'
   });
 
-  // Calculate filtered and sorted expenses
+  // Filter expenses strictly by financial date (date) matching selectedPeriod
+  const periodExpenses = useMemo(() => {
+    return allExpenses.filter((e) => e.date && e.date.startsWith(selectedPeriod));
+  }, [allExpenses, selectedPeriod]);
+
+  // Apply secondary filters (search, category, recurrence type, sorting)
   const filteredExpenses = useMemo(() => {
-    let result = [...expenses];
+    let result = [...periodExpenses];
 
     // Search filter (concept / category / description)
     if (filters.search) {
@@ -56,24 +66,7 @@ export default function GastosPage({ onOpenMobileSidebar }: PageProps) {
       result = result.filter((e) => e.isRecurring);
     }
 
-    // Period filter
-    const now = new Date();
-    const currentMonthStr = now.toISOString().slice(0, 7); // YYYY-MM
-
-    if (filters.period === 'ESTE_MES') {
-      result = result.filter((e) => e.date.startsWith(currentMonthStr));
-    } else if (filters.period === 'MES_ANTERIOR') {
-      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const prevMonthStr = prevMonth.toISOString().slice(0, 7);
-      result = result.filter((e) => e.date.startsWith(prevMonthStr));
-    } else if (filters.period === '30_DIAS') {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-      result = result.filter((e) => e.date >= thirtyDaysAgoStr);
-    }
-
-    // Sort
+    // Sort by financial date or amount
     result.sort((a, b) => {
       if (filters.sort === 'RECENT') {
         return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -91,7 +84,7 @@ export default function GastosPage({ onOpenMobileSidebar }: PageProps) {
     });
 
     return result;
-  }, [expenses, filters]);
+  }, [periodExpenses, filters]);
 
   const handleOpenCreate = () => {
     setEditingExpense(null);
@@ -119,23 +112,28 @@ export default function GastosPage({ onOpenMobileSidebar }: PageProps) {
     await refreshAll();
   };
 
-  if (loading && expenses.length === 0) {
+  if (loading && allExpenses.length === 0) {
     return <LoadingSpinner label="Cargando tu centro de gastos..." />;
   }
 
   return (
     <div className="space-y-6">
-      <Header
-        title="Registro de Gastos"
-        subtitle="Administra, consulta y filtra el historial de tus movimientos"
-        moduleImage="/salario.png"
-        onOpenMobileSidebar={onOpenMobileSidebar}
-        onQuickAction={handleOpenCreate}
-        quickActionLabel="Registrar gasto"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Header
+          title="Registro de Gastos"
+          subtitle={`Movimientos financieros del periodo: ${formatPeriodLabel(selectedPeriod)}`}
+          moduleImage="/salario.png"
+          onOpenMobileSidebar={onOpenMobileSidebar}
+          onQuickAction={handleOpenCreate}
+          quickActionLabel="Registrar gasto"
+        />
+        <div className="shrink-0 flex items-center justify-end">
+          <MonthSelector selectedPeriod={selectedPeriod} onChange={setSelectedPeriod} />
+        </div>
+      </div>
 
-      {/* Summary Cards */}
-      <GastosOverviewCards expenses={expenses} />
+      {/* Summary Cards for Selected Period */}
+      <GastosOverviewCards expenses={periodExpenses} selectedPeriod={selectedPeriod} />
 
       {/* Filters Bar */}
       <GastosFilterBar filters={filters} onChange={setFilters} />

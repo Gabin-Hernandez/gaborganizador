@@ -3,28 +3,31 @@
 import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Expense } from '@/domain/entities/Expense';
-import { TrendingDown, Repeat, Tag, Calendar } from 'lucide-react';
+import { TrendingDown, Repeat, Hash, Tag } from 'lucide-react';
+import { formatPeriodLabel } from '@/components/ui/MonthSelector';
 
 interface GastosOverviewCardsProps {
-  expenses: Expense[];
+  expenses: Expense[]; // Expenses filtered strictly for the selected period
+  selectedPeriod: string; // YYYY-MM
 }
 
-export const GastosOverviewCards: React.FC<GastosOverviewCardsProps> = ({ expenses }) => {
-  const currentMonthStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+export const GastosOverviewCards: React.FC<GastosOverviewCardsProps> = ({ expenses, selectedPeriod }) => {
+  const periodLabel = formatPeriodLabel(selectedPeriod);
 
-  const currentMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonthStr));
-  const monthTotal = currentMonthExpenses.reduce((acc, e) => acc + e.amount, 0);
+  // Total del mes
+  const monthTotal = expenses.reduce((acc, e) => acc + (e.amount || 0), 0);
 
-  const recurringExpenses = currentMonthExpenses.filter((e) => e.isRecurring);
-  const recurringTotal = recurringExpenses.reduce((acc, e) => acc + e.amount, 0);
+  // Gastos recurrentes del mes
+  const recurringExpenses = expenses.filter((e) => e.isRecurring);
+  const recurringTotal = recurringExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
 
-  // Compute top category
+  // Categoría principal del mes
   const categorySums: Record<string, number> = {};
-  currentMonthExpenses.forEach((e) => {
+  expenses.forEach((e) => {
     categorySums[e.categoryName] = (categorySums[e.categoryName] || 0) + e.amount;
   });
 
-  let topCategoryName = 'Sin registro';
+  let topCategoryName = 'Sin movimientos';
   let topCategoryAmount = 0;
 
   Object.entries(categorySums).forEach(([cat, sum]) => {
@@ -44,33 +47,33 @@ export const GastosOverviewCards: React.FC<GastosOverviewCardsProps> = ({ expens
 
   const cards = [
     {
-      title: 'Gastos este mes',
+      title: `Total ${periodLabel}`,
       amount: formatCurrency(monthTotal),
-      subtext: `${currentMonthExpenses.length} movimientos este mes`,
+      subtext: `Monto acumulado en ${periodLabel}`,
       icon: TrendingDown,
       color: 'text-rose-400',
       bgColor: 'bg-rose-500/10 border-rose-500/20'
     },
     {
-      title: 'Total movimientos',
-      amount: `${expenses.length}`,
-      subtext: 'Gastos registrados en historial',
-      icon: Calendar,
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10 border-cyan-500/20'
-    },
-    {
       title: 'Gastos recurrentes',
       amount: formatCurrency(recurringTotal),
-      subtext: `${recurringExpenses.length} cargos periódicos este mes`,
+      subtext: `${recurringExpenses.length} ocurrencias en el periodo`,
       icon: Repeat,
       color: 'text-amber-400',
       bgColor: 'bg-amber-500/10 border-amber-500/20'
     },
     {
+      title: 'Número de movimientos',
+      amount: `${expenses.length}`,
+      subtext: `Registros financieros en ${periodLabel}`,
+      icon: Hash,
+      color: 'text-cyan-400',
+      bgColor: 'bg-cyan-500/10 border-cyan-500/20'
+    },
+    {
       title: 'Categoría principal',
       amount: topCategoryName,
-      subtext: topCategoryAmount > 0 ? formatCurrency(topCategoryAmount) : 'Sin gastos este mes',
+      subtext: topCategoryAmount > 0 ? formatCurrency(topCategoryAmount) : 'Sin gastos en el periodo',
       icon: Tag,
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500/10 border-emerald-500/20'

@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header';
 import { FinancialCards } from '@/components/dashboard/FinancialCards';
 import { ActivityList } from '@/components/dashboard/ActivityList';
 import { ExpenseModal } from '@/components/expenses/ExpenseModal';
+import { MonthSelector, formatPeriodLabel } from '@/components/ui/MonthSelector';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const ExpenseDonutChart = dynamic(
@@ -23,7 +24,11 @@ interface PageProps {
 }
 
 export default function DashboardPage({ onOpenMobileSidebar }: PageProps) {
-  const { summary, last10DaysActivities, loading, refreshAll } = useFinancialSummary();
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(() =>
+    new Date().toISOString().slice(0, 7)
+  );
+
+  const { summary, last10DaysActivities, loading, refreshAll } = useFinancialSummary(selectedPeriod);
   const { addExpense } = useExpenses();
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
 
@@ -38,14 +43,19 @@ export default function DashboardPage({ onOpenMobileSidebar }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <Header
-        title="Dashboard Financiero"
-        subtitle="Monitoreo en tiempo real de tu salario, gastos e inversión"
-        moduleImage="/dashboard.png"
-        onOpenMobileSidebar={onOpenMobileSidebar}
-        onQuickAction={() => setIsExpenseModalOpen(true)}
-        quickActionLabel="Registrar gasto"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Header
+          title="Dashboard Financiero"
+          subtitle={`Resumen del periodo: ${formatPeriodLabel(selectedPeriod)}`}
+          moduleImage="/dashboard.png"
+          onOpenMobileSidebar={onOpenMobileSidebar}
+          onQuickAction={() => setIsExpenseModalOpen(true)}
+          quickActionLabel="Registrar gasto"
+        />
+        <div className="shrink-0 flex items-center justify-end">
+          <MonthSelector selectedPeriod={selectedPeriod} onChange={setSelectedPeriod} />
+        </div>
+      </div>
 
       {/* Top Summarized Metric Cards */}
       <FinancialCards summary={summary} />

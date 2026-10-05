@@ -36,12 +36,12 @@ export const FinancialCards: React.FC<FinancialCardsProps> = ({ summary }) => {
       bgColor: 'bg-rose-500/10 border-rose-500/20'
     },
     {
-      title: 'Ingresos Extra',
-      amount: formatCurrency(summary.totalExtraIncome),
-      subtext: 'Ingresos adicionales fuera de salario',
-      icon: TrendingUp,
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10 border-cyan-500/20'
+      title: 'Inversión Objetivo',
+      amount: formatCurrency(summary.investmentTarget),
+      subtext: `${summary.investmentPercentage.toFixed(1)}% del salario asignado`,
+      icon: PieChart,
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/10 border-indigo-500/20'
     },
     {
       title: 'Disponible / Restante',
